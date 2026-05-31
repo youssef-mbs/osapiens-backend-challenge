@@ -13,49 +13,25 @@ This repository demonstrates a backend architecture that handles asynchronous ta
 - Implement a `TaskRunner` that executes jobs associated with tasks and manages task and workflow states.
 - Run tasks asynchronously using a background worker.
 
-## Quick Start
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/yourusername/backend-coding-challenge.git
-   cd backend-coding-challenge
-   ```
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-3. **Configure TypeORM:**
-   - Edit `src/data-source.ts` if needed (entities, DB path).
-4. **(Optional) Compile TypeScript:**
-   ```bash
-   npx tsc
-   ```
-5. **Start the server:**
-   ```bash
-   npm start
-   ```
-6. **Create a workflow:**
-   - POST to `/analysis` (see example in README above).
-7. **Check status/results:**
-   - Use `/workflow/:id/status` and `/workflow/:id/results` endpoints.
-
-See the full README for details, API examples, and troubleshooting.
-
 ## Key Features
 
 1. **Entity Modeling with TypeORM**
+
    - **Task Entity:** Represents an individual unit of work with attributes like `taskType`, `status`, `progress`, and references to a `Workflow`.
    - **Workflow Entity:** Groups multiple tasks into a defined sequence or steps, allowing complex multi-step processes.
 
 2. **Workflow Creation from YAML**
+
    - Use `WorkflowFactory` to load workflow definitions from a YAML file.
    - Dynamically create workflows and tasks without code changes by updating YAML files.
 
 3. **Asynchronous Task Execution**
+
    - A background worker (`taskWorker`) continuously polls for `queued` tasks.
    - The `TaskRunner` runs the appropriate job based on a task’s `taskType`.
 
 4. **Robust Status Management**
+
    - `TaskRunner` updates the status of tasks (from `queued` to `in_progress`, `completed`, or `failed`).
    - Workflow status is evaluated after each task completes, ensuring you know when the entire workflow is `completed` or `failed`.
 
@@ -66,38 +42,33 @@ See the full README for details, API examples, and troubleshooting.
 ## Project Structure
 
 ```
-src/
-├─ data/
-│   └─ world_data.json         # Contains world data for analysis
+src
+├─ models/
+│   ├─ world_data.json  # Contains world data for analysis
 │
 ├─ models/
-│   ├─ Result.ts               # Defines the Result entity
-│   ├─ Task.ts                 # Defines the Task entity
-│   └─ Workflow.ts             # Defines the Workflow entity
+│   ├─ Result.ts        # Defines the Result entity
+│   ├─ Task.ts          # Defines the Task entity
+│   ├─ Workflow.ts      # Defines the Workflow entity
 │
 ├─ jobs/
-│   ├─ DataAnalysisJob.ts      # Example job
-│   ├─ EmailNotificationJob.ts # Example job
-│   ├─ Job.ts                  # Job interface
-│   ├─ JobFactory.ts           # Maps taskType to a Job
-│   ├─ PolygonAreaJob.ts       # Calculates polygon area
-│   └─ ReportGenerationJob.ts  # Aggregates workflow results
+│   ├─ Job.ts           # Job interface
+│   ├─ JobFactory.ts    # getJobForTaskType function for mapping taskType to a Job
+│   ├─ TaskRunner.ts    # Handles job execution & task/workflow state transitions
+│   ├─ DataAnalysisJob.ts (example)
+│   ├─ EmailNotificationJob.ts (example)
 │
 ├─ workflows/
-│   ├─ WorkflowFactory.ts      # Creates workflows & tasks from YAML
-│   └─ example_workflow.yml    # Example workflow definition
+│   ├─ WorkflowFactory.ts  # Creates workflows & tasks from a YAML definition
 │
 ├─ workers/
-│   ├─ taskRunner.ts           # Handles job execution & state transitions
-│   └─ taskWorker.ts           # Background worker for queued tasks
+│   ├─ taskWorker.ts    # Background worker that fetches queued tasks & runs them
 │
 ├─ routes/
-│   ├─ analysisRoutes.ts       # POST /analysis endpoint
-│   ├─ defaultRoute.ts         # Default route handler
-│   └─ workflowRoutes.ts       # Workflow status/results endpoints
+│   ├─ analysisRoutes.ts # POST /analysis endpoint to create workflows
 │
-├─ data-source.ts              # TypeORM DataSource configuration
-└─ index.ts                    # Express.js server initialization & worker startup
+├─ data-source.ts       # TypeORM DataSource configuration
+└─ index.ts             # Express.js server initialization & starting the worker
 ```
 
 ## Getting Started
@@ -124,6 +95,7 @@ src/
    ```
 
 3. **Configure TypeORM:**
+
    - Edit `data-source.ts` to ensure the `entities` array includes `Task` and `Workflow` entities.
    - Confirm database settings (e.g. SQLite file path).
 
@@ -281,41 +253,16 @@ Modify the system to support workflows with tasks that depend on the outputs of 
 **Objective:**  
 Save the aggregated results of all tasks in the workflow as the `finalResult` field of the `Workflow` entity.
 
-#### **How it works:**
+#### **Steps:**
 
-- When all tasks in a workflow are completed, the system automatically aggregates the outputs and errors from each task and saves them as a JSON object in the `finalResult` field of the `Workflow` entity.
-- If any task fails, its error message is included in the aggregation.
+1. Modify the `Workflow` entity to include a `finalResult` field:
+2. Aggregate the outputs of all tasks in the workflow after the last task completes.
+3. Save the aggregated results in the `finalResult` field.
 
-#### **Sample finalResult value:**
+#### **Requirements:**
 
-```json
-{
-  "workflowId": "3433c76d-f226-4c91-afb5-7dfc7accab24",
-  "tasks": [
-    {
-      "taskId": "...",
-      "type": "polygonArea",
-      "output": { "area": 12345 },
-      "error": null
-    },
-    {
-      "taskId": "...",
-      "type": "reportGeneration",
-      "output": { "report": "..." },
-      "error": null
-    },
-    {
-      "taskId": "...",
-      "type": "dataAnalysis",
-      "output": null,
-      "error": "Task failed due to ..."
-    }
-  ],
-  "summary": "Aggregated workflow results"
-}
-```
-
-You can retrieve this result via the `/workflow/:id/results` endpoint after the workflow is completed.
+- The `finalResult` must include outputs from all completed tasks.
+- Handle cases where tasks fail, and include failure information in the final result.
 
 ---
 
@@ -374,7 +321,14 @@ Implement an API endpoint to retrieve the final results of a completed workflow.
 ### **Deliverables**
 
 - **Code Implementation:**
+
   - New jobs: `PolygonAreaJob` and `ReportGenerationJob`.
   - Enhanced workflow support for interdependent tasks.
   - Workflow final results aggregation.
   - New API endpoints for workflow status and results.
+
+- **Documentation:**
+  - Update the README file to include instructions for testing the new features.
+  - Document the API endpoints with request and response examples.
+
+---
