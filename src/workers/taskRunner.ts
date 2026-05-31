@@ -170,17 +170,48 @@ export class TaskRunner {
     });
 
     if (currentWorkflow) {
-      const allCompleted = currentWorkflow.tasks.every(
-        (t) => t.status === TaskStatus.Completed,
+      const allFinished = currentWorkflow.tasks.every(
+        (t) =>
+          t.status === TaskStatus.Completed || t.status === TaskStatus.Failed,
       );
       const anyFailed = currentWorkflow.tasks.some(
         (t) => t.status === TaskStatus.Failed,
       );
 
-      if (anyFailed) {
-        currentWorkflow.status = WorkflowStatus.Failed;
-      } else if (allCompleted) {
-        currentWorkflow.status = WorkflowStatus.Completed;
+      if (allFinished) {
+        currentWorkflow.status = anyFailed
+          ? WorkflowStatus.Failed
+          : WorkflowStatus.Completed;
+
+        // Aggregate all task outputs and errors
+        const resultRepository =
+          this.taskRepository.manager.getRepository(Result);
+        const taskOutputs = await Promise.all(
+          currentWorkflow.tasks.map(async (task) => {
+            let output = null;
+            let error = null;
+            if (task.status === TaskStatus.Completed && task.resultId) {
+              const result = await resultRepository.findOne({
+                where: { resultId: task.resultId },
+              });
+              output = result?.data ? JSON.parse(result.data) : null;
+            } else if (task.status === TaskStatus.Failed) {
+              error = task.progress || "Task failed";
+            }
+            return {
+              taskId: task.taskId,
+              type: task.taskType,
+              output,
+              error,
+            };
+          }),
+        );
+        const finalResult = {
+          workflowId: currentWorkflow.workflowId,
+          tasks: taskOutputs,
+          summary: "Aggregated workflow results",
+        };
+        currentWorkflow.finalResult = JSON.stringify(finalResult);
       } else {
         currentWorkflow.status = WorkflowStatus.InProgress;
       }
