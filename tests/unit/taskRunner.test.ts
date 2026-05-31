@@ -86,7 +86,14 @@ describe("TaskRunner dependency behavior", () => {
 
     const getJobSpy = vi.spyOn(jobFactory, "getJobForTaskType");
 
-    await runner.run({ taskId: "task-2" } as Task);
+    await runner.run({
+      taskId: "task-2",
+      clientId: "client-1",
+      geoJson: "{}",
+      status: TaskStatus.Queued,
+      taskType: "notification",
+      workflow: { workflowId: "wf-1" } as any,
+    } as Task);
 
     expect(taskRepo.save).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -140,7 +147,14 @@ describe("TaskRunner dependency behavior", () => {
       run: runSpy,
     } as any);
 
-    await runner.run({ taskId: "task-2" } as Task);
+    await runner.run({
+      taskId: "task-2",
+      clientId: "client-1",
+      geoJson: "{}",
+      status: TaskStatus.Queued,
+      taskType: "notification",
+      workflow: { workflowId: "wf-1" } as any,
+    } as Task);
 
     expect(runSpy).toHaveBeenCalledWith(
       expect.objectContaining({ taskId: "task-2" }),
@@ -154,6 +168,63 @@ describe("TaskRunner dependency behavior", () => {
       expect.objectContaining({
         status: TaskStatus.Completed,
       }),
+    );
+  });
+
+  // Error handling: job throws and dependency fails
+  it("marks task as failed if job throws", async () => {
+    const { runner, taskRepo } = createRunnerHarness();
+    const task = {
+      taskId: "task-err",
+      taskType: "failingJob",
+      status: TaskStatus.Queued,
+      workflow: { workflowId: "wf-err" },
+    };
+    taskRepo.findOne.mockResolvedValue(task);
+    taskRepo.save.mockImplementation(async (t) => t);
+    vi.spyOn(jobFactory, "getJobForTaskType").mockReturnValue({
+      run: vi.fn().mockRejectedValue(new Error("Job failed!")),
+    });
+    try {
+      await runner.run({
+        taskId: "task-err",
+        clientId: "client-err",
+        geoJson: "{}",
+        status: TaskStatus.Queued,
+        taskType: "failingJob",
+        workflow: { workflowId: "wf-err" } as any,
+      } as Task);
+    } catch (e) {
+      // Suppress error, only care about status
+    }
+    expect(taskRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({ status: TaskStatus.Failed }),
+    );
+  });
+
+  it("marks dependent task as failed if dependency failed", async () => {
+    const { runner, taskRepo } = createRunnerHarness();
+    const task = {
+      taskId: "task-2",
+      taskType: "notification",
+      status: TaskStatus.Queued,
+      dependencyTaskId: "task-1",
+      dependency: { taskId: "task-1", status: TaskStatus.Failed },
+      workflow: { workflowId: "wf-1" },
+    };
+    taskRepo.findOne.mockResolvedValue(task);
+    taskRepo.save.mockImplementation(async (t) => t);
+    vi.spyOn(jobFactory, "getJobForTaskType").mockReturnValue({ run: vi.fn() });
+    await runner.run({
+      taskId: "task-2",
+      clientId: "client-1",
+      geoJson: "{}",
+      status: TaskStatus.Queued,
+      taskType: "notification",
+      workflow: { workflowId: "wf-1" } as any,
+    } as Task);
+    expect(taskRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({ status: TaskStatus.Failed }),
     );
   });
 });
