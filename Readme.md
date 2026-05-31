@@ -38,33 +38,38 @@ This repository demonstrates a backend architecture that handles asynchronous ta
 ## Project Structure
 
 ```
-src
-├─ models/
-│   ├─ world_data.json  # Contains world data for analysis
+src/
+├─ data/
+│   └─ world_data.json         # Contains world data for analysis
 │
 ├─ models/
-│   ├─ Result.ts        # Defines the Result entity
-│   ├─ Task.ts          # Defines the Task entity
-│   ├─ Workflow.ts      # Defines the Workflow entity
+│   ├─ Result.ts               # Defines the Result entity
+│   ├─ Task.ts                 # Defines the Task entity
+│   └─ Workflow.ts             # Defines the Workflow entity
 │
 ├─ jobs/
-│   ├─ Job.ts           # Job interface
-│   ├─ JobFactory.ts    # getJobForTaskType function for mapping taskType to a Job
-│   ├─ TaskRunner.ts    # Handles job execution & task/workflow state transitions
-│   ├─ DataAnalysisJob.ts (example)
-│   ├─ EmailNotificationJob.ts (example)
+│   ├─ DataAnalysisJob.ts      # Example job
+│   ├─ EmailNotificationJob.ts # Example job
+│   ├─ Job.ts                  # Job interface
+│   ├─ JobFactory.ts           # Maps taskType to a Job
+│   ├─ PolygonAreaJob.ts       # Calculates polygon area
+│   └─ ReportGenerationJob.ts  # Aggregates workflow results
 │
 ├─ workflows/
-│   ├─ WorkflowFactory.ts  # Creates workflows & tasks from a YAML definition
+│   ├─ WorkflowFactory.ts      # Creates workflows & tasks from YAML
+│   └─ example_workflow.yml    # Example workflow definition
 │
 ├─ workers/
-│   ├─ taskWorker.ts    # Background worker that fetches queued tasks & runs them
+│   ├─ taskRunner.ts           # Handles job execution & state transitions
+│   └─ taskWorker.ts           # Background worker for queued tasks
 │
 ├─ routes/
-│   ├─ analysisRoutes.ts # POST /analysis endpoint to create workflows
+│   ├─ analysisRoutes.ts       # POST /analysis endpoint
+│   ├─ defaultRoute.ts         # Default route handler
+│   └─ workflowRoutes.ts       # Workflow status/results endpoints
 │
-├─ data-source.ts       # TypeORM DataSource configuration
-└─ index.ts             # Express.js server initialization & starting the worker
+├─ data-source.ts              # TypeORM DataSource configuration
+└─ index.ts                    # Express.js server initialization & worker startup
 ```
 
 ## Getting Started
@@ -345,9 +350,3 @@ Implement an API endpoint to retrieve the final results of a completed workflow.
   - Enhanced workflow support for interdependent tasks.
   - Workflow final results aggregation.
   - New API endpoints for workflow status and results.
-
-- **Documentation:**
-  - Update the README file to include instructions for testing the new features.
-  - Document the API endpoints with request and response examples.
-
----
