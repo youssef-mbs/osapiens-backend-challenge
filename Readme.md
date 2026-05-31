@@ -16,18 +16,22 @@ This repository demonstrates a backend architecture that handles asynchronous ta
 ## Key Features
 
 1. **Entity Modeling with TypeORM**
+
    - **Task Entity:** Represents an individual unit of work with attributes like `taskType`, `status`, `progress`, and references to a `Workflow`.
    - **Workflow Entity:** Groups multiple tasks into a defined sequence or steps, allowing complex multi-step processes.
 
 2. **Workflow Creation from YAML**
+
    - Use `WorkflowFactory` to load workflow definitions from a YAML file.
    - Dynamically create workflows and tasks without code changes by updating YAML files.
 
 3. **Asynchronous Task Execution**
+
    - A background worker (`taskWorker`) continuously polls for `queued` tasks.
    - The `TaskRunner` runs the appropriate job based on a task’s `taskType`.
 
 4. **Robust Status Management**
+
    - `TaskRunner` updates the status of tasks (from `queued` to `in_progress`, `completed`, or `failed`).
    - Workflow status is evaluated after each task completes, ensuring you know when the entire workflow is `completed` or `failed`.
 
@@ -91,36 +95,21 @@ src
    ```
 
 3. **Configure TypeORM:**
+
    - Edit `data-source.ts` to ensure the `entities` array includes `Task` and `Workflow` entities.
    - Confirm database settings (e.g. SQLite file path).
 
 4. **Create or Update the Workflow YAML:**
    - Place a YAML file (e.g. `example_workflow.yml`) in a `workflows/` directory.
    - Define steps, for example:
-
      ```yaml
      name: "example_workflow"
      steps:
-        - taskType: "analysis"
-           stepNumber: 1
-        - taskType: "notification"
-           stepNumber: 2
-           dependsOn: 1  # This task will only run after step 1 completes
+       - taskType: "analysis"
+         stepNumber: 1
+       - taskType: "notification"
+         stepNumber: 2
      ```
-
-   - You can chain multiple dependencies:
-
-     ```yaml
-     name: "chained_workflow"
-     steps:
-        - taskType: "polygonArea"
-           stepNumber: 1
-        - taskType: "reportGeneration"
-           stepNumber: 2
-           dependsOn: 1
-     ```
-
-   - The `dependsOn` field ensures that a task will not execute until the specified step has completed successfully. The output of the dependency is available to the dependent job via the job context.
 
 ### Running the Application
 
@@ -332,6 +321,7 @@ Implement an API endpoint to retrieve the final results of a completed workflow.
 ### **Deliverables**
 
 - **Code Implementation:**
+
   - New jobs: `PolygonAreaJob` and `ReportGenerationJob`.
   - Enhanced workflow support for interdependent tasks.
   - Workflow final results aggregation.
