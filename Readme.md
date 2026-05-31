@@ -13,6 +13,33 @@ This repository demonstrates a backend architecture that handles asynchronous ta
 - Implement a `TaskRunner` that executes jobs associated with tasks and manages task and workflow states.
 - Run tasks asynchronously using a background worker.
 
+## Quick Start
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/yourusername/backend-coding-challenge.git
+   cd backend-coding-challenge
+   ```
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+3. **Configure TypeORM:**
+   - Edit `src/data-source.ts` if needed (entities, DB path).
+4. **(Optional) Compile TypeScript:**
+   ```bash
+   npx tsc
+   ```
+5. **Start the server:**
+   ```bash
+   npm start
+   ```
+6. **Create a workflow:**
+   - POST to `/analysis` (see example in README above).
+7. **Check status/results:**
+   - Use `/workflow/:id/status` and `/workflow/:id/results` endpoints.
+
+
 ## Key Features
 
 1. **Entity Modeling with TypeORM**
