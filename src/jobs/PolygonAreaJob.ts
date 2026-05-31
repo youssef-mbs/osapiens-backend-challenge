@@ -1,12 +1,15 @@
 import area from "@turf/area";
 import { Feature, GeoJsonProperties, MultiPolygon, Polygon } from "geojson";
-import { Job } from "./Job";
+import { Job, JobContext } from "./Job";
 import { Task } from "../models/Task";
 
 type PolygonLikeFeature = Feature<Polygon | MultiPolygon, GeoJsonProperties>;
 
 export class PolygonAreaJob implements Job {
-  async run(task: Task): Promise<{ areaSqMeters: number }> {
+  async run(
+    task: Task,
+    _context?: JobContext,
+  ): Promise<{ areaSqMeters: number }> {
     const polygonFeature = this.parsePolygonFeature(task.geoJson);
     const areaSqMeters = area(polygonFeature);
 

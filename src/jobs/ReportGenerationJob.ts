@@ -3,7 +3,7 @@ import { AppDataSource } from "../data-source";
 import { Result } from "../models/Result";
 import { Task } from "../models/Task";
 import { TaskStatus } from "../workers/taskRunner";
-import { Job } from "./Job";
+import { Job, JobContext } from "./Job";
 
 interface ReportTaskItem {
   taskId: string;
@@ -20,7 +20,7 @@ interface WorkflowReport {
 }
 
 export class ReportGenerationJob implements Job {
-  async run(task: Task): Promise<WorkflowReport> {
+  async run(task: Task, _context?: JobContext): Promise<WorkflowReport> {
     const workflowId = task.workflow?.workflowId;
     if (!workflowId) {
       throw new Error(
