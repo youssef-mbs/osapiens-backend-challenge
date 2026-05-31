@@ -14,28 +14,28 @@ export class Task {
   @PrimaryGeneratedColumn("uuid")
   taskId!: string;
 
-  @Column()
+  @Column("varchar")
   clientId!: string;
 
   @Column("text")
   geoJson!: string;
 
-  @Column()
+  @Column("varchar")
   status!: TaskStatus;
 
   @Column({ nullable: true, type: "text" })
   progress?: string | null;
 
-  @Column({ nullable: true })
+  @Column("uuid", { nullable: true })
   resultId?: string;
 
-  @Column()
+  @Column("varchar")
   taskType!: string;
 
-  @Column({ default: 1 })
+  @Column("int", { default: 1 })
   stepNumber!: number;
 
-  @Column({ nullable: true })
+  @Column("uuid", { nullable: true })
   dependencyTaskId?: string | null;
 
   @ManyToOne(() => Task, (task) => task.dependentTasks, { nullable: true })

@@ -7,10 +7,10 @@ export class Workflow {
   @PrimaryGeneratedColumn("uuid")
   workflowId!: string;
 
-  @Column()
+  @Column("varchar")
   clientId!: string;
 
-  @Column({ default: WorkflowStatus.Initial })
+  @Column("varchar", { default: WorkflowStatus.Initial })
   status!: WorkflowStatus;
 
   @Column({ type: "text", nullable: true })
